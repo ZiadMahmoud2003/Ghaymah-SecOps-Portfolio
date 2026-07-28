@@ -15,8 +15,8 @@
 ---
 
 ## Executive Summary
-> **Author:** Ziad Alex  
-> **Profile:** [https://qabilah.com/profile/ziadalex2003/](https://qabilah.com/profile/ziadalex2003/)  
+> **Author:** Ziad Mahmoud Abdelgwad
+> **Profile:** [https://linkedin.com/in/ziad-abdelgwad](https://linkedin.com/in/ziad-abdelgwad)  
 > **Domain:** Security Operations (SecOps) & Cloud Security Architecture  
 > **Target Environment:** Ghaymah Managed Cloud Services (`ghaymah.systems`, `mithal.space`)
 
