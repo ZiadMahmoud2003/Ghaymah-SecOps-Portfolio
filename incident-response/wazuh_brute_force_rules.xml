@@ -1,0 +1,197 @@
+<!--
+  ============================================================================
+  Wazuh Custom Rules — API Brute Force Detection for Ghaymah
+  ============================================================================
+  File:    /var/ossec/etc/rules/ghaymah_brute_force.xml
+  Purpose: Detect early-stage API brute force attempts against Ghaymah
+           authentication endpoints with progressive severity escalation.
+  
+  Rule ID Range: 100200 - 100219 (reserved for Ghaymah auth rules)
+  
+  Installation:
+    1. Copy this file to /var/ossec/etc/rules/ghaymah_brute_force.xml
+    2. Add to ossec.conf: <include>ghaymah_brute_force.xml</include>
+    3. Restart Wazuh manager: systemctl restart wazuh-manager
+    4. Configure active response in ossec.conf for automated blocking
+  ============================================================================
+-->
+
+<group name="ghaymah,authentication,brute_force,">
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       BASE RULE: Single API Authentication Failure
+       Matches JSON-formatted API gateway logs with failed login events.
+       ════════════════════════════════════════════════════════════════════════ -->
+  <rule id="100200" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="event.type">authentication_failure</field>
+    <field name="event.endpoint">^/api/v\d+/auth/login$</field>
+    <description>Ghaymah API: Single authentication failure on login endpoint.</description>
+    <group>authentication_failed,gdpr_IV_32.2,hipaa_164.312.b,pci_dss_10.2.4,</group>
+    <options>no_full_log</options>
+  </rule>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       EARLY WARNING: 5 failed logins in 60 seconds from same source IP
+       Level 6 = Low severity — early indicator of possible brute force.
+       ════════════════════════════════════════════════════════════════════════ -->
+  <rule id="100201" level="6" frequency="5" timeframe="60">
+    <if_matched_sid>100200</if_matched_sid>
+    <same_source_ip />
+    <description>Ghaymah API: Possible brute force — $(srcip) failed 5+ logins in 60 seconds against $(data.target_user).</description>
+    <mitre>
+      <id>T1110.001</id>
+      <id>T1078</id>
+    </mitre>
+    <group>authentication_failures,brute_force_early,gdpr_IV_35.7.d,pci_dss_11.4,</group>
+  </rule>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       CONFIRMED BRUTE FORCE: 20 failed logins in 120 seconds from same IP
+       Level 10 = Medium severity — confirmed brute force attack in progress.
+       Triggers n8n SOAR playbook for soft-block (rate limiting + MFA).
+       ════════════════════════════════════════════════════════════════════════ -->
+  <rule id="100202" level="10" frequency="20" timeframe="120">
+    <if_matched_sid>100200</if_matched_sid>
+    <same_source_ip />
+    <description>Ghaymah API: CONFIRMED brute force attack from $(srcip) — 20+ failures in 2 minutes. Target: $(data.target_user).</description>
+    <mitre>
+      <id>T1110.001</id>
+      <id>T1110.003</id>
+    </mitre>
+    <group>brute_force_confirmed,gdpr_IV_35.7.d,pci_dss_11.4,nist_800_53_SI.4,</group>
+    <options>alert_by_email</options>
+  </rule>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       AGGRESSIVE BRUTE FORCE: 50 failed logins in 120 seconds from same IP
+       Level 13 = High severity — aggressive attack, automatic IP block.
+       Triggers n8n SOAR playbook for hard-block (firewall + account lock).
+       ════════════════════════════════════════════════════════════════════════ -->
+  <rule id="100203" level="13" frequency="50" timeframe="120">
+    <if_matched_sid>100200</if_matched_sid>
+    <same_source_ip />
+    <description>Ghaymah API: AGGRESSIVE brute force from $(srcip) — 50+ failures in 2 minutes. AUTOMATIC BLOCK INITIATED.</description>
+    <mitre>
+      <id>T1110.001</id>
+      <id>T1110.003</id>
+      <id>T1110.004</id>
+    </mitre>
+    <group>brute_force_aggressive,gdpr_IV_33,pci_dss_11.4,nist_800_53_SI.4,</group>
+    <options>alert_by_email</options>
+  </rule>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       DISTRIBUTED BRUTE FORCE: Multiple IPs targeting same account
+       Level 12 = High severity — credential stuffing / distributed attack.
+       This detects attacks that rotate through many source IPs but
+       target the same user account.
+       ════════════════════════════════════════════════════════════════════════ -->
+  <rule id="100204" level="12" frequency="10" timeframe="300">
+    <if_matched_sid>100200</if_matched_sid>
+    <same_field>data.target_user</same_field>
+    <different_source_ip />
+    <description>Ghaymah API: DISTRIBUTED brute force — 10+ different IPs targeting account $(data.target_user) in 5 minutes.</description>
+    <mitre>
+      <id>T1110.004</id>
+      <id>T1078</id>
+    </mitre>
+    <group>brute_force_distributed,credential_stuffing,gdpr_IV_33,pci_dss_11.4,</group>
+    <options>alert_by_email</options>
+  </rule>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       PASSWORD SPRAY: Same IP targeting multiple accounts
+       Level 11 = Medium-High — attacker trying common passwords across
+       many accounts to avoid per-account lockout.
+       ════════════════════════════════════════════════════════════════════════ -->
+  <rule id="100205" level="11" frequency="10" timeframe="300">
+    <if_matched_sid>100200</if_matched_sid>
+    <same_source_ip />
+    <different_field>data.target_user</different_field>
+    <description>Ghaymah API: PASSWORD SPRAY detected — $(srcip) targeting 10+ different accounts in 5 minutes.</description>
+    <mitre>
+      <id>T1110.003</id>
+    </mitre>
+    <group>password_spray,brute_force_distributed,gdpr_IV_33,pci_dss_11.4,</group>
+    <options>alert_by_email</options>
+  </rule>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       SUCCESSFUL LOGIN AFTER BRUTE FORCE: Credential compromise indicator
+       Level 14 = Critical — a successful login following brute force
+       strongly indicates the attacker found valid credentials.
+       ════════════════════════════════════════════════════════════════════════ -->
+  <rule id="100206" level="14">
+    <if_matched_sid>100202</if_matched_sid>
+    <field name="event.type">authentication_success</field>
+    <same_source_ip />
+    <description>Ghaymah API: ⚠️ CRITICAL — Successful login from $(srcip) AFTER confirmed brute force. Account $(data.target_user) likely COMPROMISED.</description>
+    <mitre>
+      <id>T1078</id>
+      <id>T1110</id>
+    </mitre>
+    <group>account_compromised,brute_force_success,gdpr_IV_33,pci_dss_10.2.4,nist_800_53_SI.4,</group>
+    <options>alert_by_email</options>
+  </rule>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       IMPOSSIBLE TRAVEL: Login from geographically distant locations
+       Level 12 = High — if a user logs in from two locations that would
+       require impossible physical travel speed.
+       ════════════════════════════════════════════════════════════════════════ -->
+  <rule id="100207" level="12" frequency="2" timeframe="3600">
+    <field name="event.type">authentication_success</field>
+    <field name="event.endpoint">^/api/v\d+/auth/login$</field>
+    <same_field>data.target_user</same_field>
+    <different_field>data.geoip.country_code</different_field>
+    <description>Ghaymah API: IMPOSSIBLE TRAVEL — $(data.target_user) authenticated from 2+ countries within 1 hour. Possible credential compromise.</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>impossible_travel,account_compromised,gdpr_IV_33,</group>
+    <options>alert_by_email</options>
+  </rule>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       SERVICE ACCOUNT BRUTE FORCE: Higher severity for service accounts
+       Level 14 = Critical — service accounts have elevated privileges;
+       brute force against them is always critical.
+       ════════════════════════════════════════════════════════════════════════ -->
+  <rule id="100208" level="14" frequency="5" timeframe="60">
+    <if_matched_sid>100200</if_matched_sid>
+    <field name="data.target_user">^svc-|^service-|^system-</field>
+    <description>Ghaymah API: ⚠️ CRITICAL — Brute force targeting SERVICE ACCOUNT $(data.target_user) from $(srcip). Service accounts have elevated privileges!</description>
+    <mitre>
+      <id>T1110.001</id>
+      <id>T1078.001</id>
+    </mitre>
+    <group>brute_force_service_account,gdpr_IV_33,pci_dss_10.2.4,</group>
+    <options>alert_by_email</options>
+  </rule>
+
+</group>
+
+<!--
+  ============================================================================
+  ACTIVE RESPONSE CONFIGURATION (add to /var/ossec/etc/ossec.conf)
+  ============================================================================
+  
+  <ossec_config>
+    <active-response>
+      <command>firewall-drop</command>
+      <location>local</location>
+      <rules_id>100203</rules_id>
+      <timeout>3600</timeout>
+    </active-response>
+    
+    <integration>
+      <name>custom-n8n</name>
+      <hook_url>https://n8n.ghaymah.internal/webhook/brute-force</hook_url>
+      <rule_id>100202,100203,100204,100205,100206,100207,100208</rule_id>
+      <alert_format>json</alert_format>
+    </integration>
+  </ossec_config>
+  
+  ============================================================================
+-->

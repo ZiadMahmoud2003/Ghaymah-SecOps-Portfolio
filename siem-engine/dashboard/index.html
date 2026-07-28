@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ghaymah SIEM Dashboard — Real-time security monitoring and threat detection">
+    <title>Ghaymah SIEM — Security Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ═══ Header ═══ -->
+    <header class="header" id="main-header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                        <path d="M14 2L26 8V20L14 26L2 20V8L14 2Z" stroke="url(#grad)" stroke-width="2" fill="none"/>
+                        <path d="M14 10L20 13V19L14 22L8 19V13L14 10Z" fill="url(#grad)" opacity="0.6"/>
+                        <defs><linearGradient id="grad" x1="2" y1="2" x2="26" y2="26">
+                            <stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#06b6d4"/>
+                        </linearGradient></defs>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="logo-text">Ghaymah SIEM</h1>
+                    <span class="logo-subtitle">Security Operations Center</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-indicator" id="status-indicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Live Monitoring</span>
+            </div>
+            <div class="last-update" id="last-update">Updated: --</div>
+        </div>
+    </header>
+
+    <!-- ═══ Stats Bar ═══ -->
+    <section class="stats-bar" id="stats-bar">
+        <div class="stat-card stat-critical" id="stat-critical">
+            <div class="stat-icon">🔴</div>
+            <div class="stat-content">
+                <span class="stat-value" id="count-critical">0</span>
+                <span class="stat-label">Critical</span>
+            </div>
+        </div>
+        <div class="stat-card stat-high" id="stat-high">
+            <div class="stat-icon">🟠</div>
+            <div class="stat-content">
+                <span class="stat-value" id="count-high">0</span>
+                <span class="stat-label">High</span>
+            </div>
+        </div>
+        <div class="stat-card stat-medium" id="stat-medium">
+            <div class="stat-icon">🟡</div>
+            <div class="stat-content">
+                <span class="stat-value" id="count-medium">0</span>
+                <span class="stat-label">Medium</span>
+            </div>
+        </div>
+        <div class="stat-card stat-low" id="stat-low">
+            <div class="stat-icon">🟢</div>
+            <div class="stat-content">
+                <span class="stat-value" id="count-low">0</span>
+                <span class="stat-label">Low</span>
+            </div>
+        </div>
+        <div class="stat-card stat-total" id="stat-total">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <span class="stat-value" id="count-total">0</span>
+                <span class="stat-label">Total Alerts</span>
+            </div>
+        </div>
+        <div class="stat-card stat-ips" id="stat-ips">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-content">
+                <span class="stat-value" id="count-ips">0</span>
+                <span class="stat-label">Malicious IPs</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ Main Content ═══ -->
+    <main class="main-content">
+        <!-- Alerts Panel -->
+        <section class="panel alerts-panel" id="alerts-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    Triggered Alerts
+                </h2>
+                <div class="panel-controls">
+                    <select id="filter-severity" class="filter-select">
+                        <option value="all">All Severities</option>
+                        <option value="CRITICAL">Critical</option>
+                        <option value="HIGH">High</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="LOW">Low</option>
+                    </select>
+                    <select id="filter-source" class="filter-select">
+                        <option value="all">All Sources</option>
+                        <option value="firewall">Firewall</option>
+                        <option value="webserver">Web Server</option>
+                        <option value="auth">Auth</option>
+                    </select>
+                </div>
+            </div>
+            <div class="alerts-list" id="alerts-list">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading alerts...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Malicious IPs Panel -->
+        <section class="panel ips-panel" id="ips-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"/>
+                    </svg>
+                    Malicious IPs
+                </h2>
+                <span class="panel-badge" id="ip-count-badge">0</span>
+            </div>
+            <div class="ips-list" id="ips-list">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Analyzing threats...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ═══ Alert Detail Modal ═══ -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="alert-modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Alert Details</h3>
+                <button class="modal-close" id="modal-close" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

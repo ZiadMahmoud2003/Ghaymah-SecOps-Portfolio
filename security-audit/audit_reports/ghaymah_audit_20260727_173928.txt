@@ -1,0 +1,20 @@
+Audit Started: Mon Jul 27 05:39:28 PM EDT 2026
+[SECTION] PORT AUDIT
+[PASS] MongoDB (27017) closed
+[FAIL] HTTP (80) unavailable
+[PASS] Redis (6379) closed
+[PASS] PostgreSQL (5432) closed
+[PASS] SSH (22) closed
+[FAIL] HTTPS (443) unavailable
+[PASS] MySQL (3306) closed
+[SECTION] SSL AUDIT
+[WARNING] HTTPS response code: 000000
+[FAIL] Cannot connect to ghaymah.systems:443 for SSL checks.
+[SECTION] PERMISSION AUDIT
+[WARNING] World writable file: ./ghaymah_sec_audit.sh (777)
+[PASS] No world writable directories
+[SECTION] SUMMARY
+Critical : 3
+Warnings : 2
+Passed   : 6
+Overall  : FAIL

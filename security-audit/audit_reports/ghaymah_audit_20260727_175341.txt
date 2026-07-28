@@ -1,0 +1,27 @@
+Audit Started: Mon Jul 27 05:53:42 PM EDT 2026
+[SECTION] PORT AUDIT
+[PASS] MongoDB (27017) closed
+[PASS] HTTP (80) reachable
+[PASS] Redis (6379) closed
+[PASS] PostgreSQL (5432) closed
+[PASS] SSH (22) closed
+[PASS] HTTPS (443) reachable
+[PASS] MySQL (3306) closed
+[SECTION] SSL AUDIT
+[PASS] HTTPS response code: 200
+[PASS] TLS 1.3 Enabled
+[PASS] Certificate Valid (53 days remaining)
+[WARNING] Permissions-Policy Missing
+[PASS] HSTS Enabled
+[PASS] X-Content-Type-Options Enabled
+[PASS] X-Frame-Options Enabled
+[WARNING] Content-Security-Policy Missing
+[PASS] Referrer-Policy Enabled
+[SECTION] PERMISSION AUDIT
+[WARNING] World writable file: ./ghaymah_sec_audit.sh (777)
+[PASS] No world writable directories
+[SECTION] SUMMARY
+Critical : 0
+Warnings : 3
+Passed   : 15
+Overall  : WARNING
